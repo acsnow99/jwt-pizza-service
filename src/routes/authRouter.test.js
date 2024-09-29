@@ -1,6 +1,5 @@
 const request = require('supertest');
 const app = require('../service');
-import { expect, test, beforeAll } from 'globals';
 
 const testUser = { name: 'pizza diner', email: 'reg@test.com', password: 'a' };
 let testUserAuthToken;
