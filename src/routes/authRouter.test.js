@@ -1,7 +1,6 @@
 const request = require('supertest');
 const app = require('../service');
 
-const adminUser = { name: 'admin', email: 'admin@test.com', password: 'ad', roles: [{ role: 'admin' }] };
 const testUser = { name: 'pizza diner', email: 'reg@test.com', password: 'a' };
 let testUserAuthToken;
 
@@ -47,6 +46,5 @@ test('update', async () => {
   const updateRes = await request(app).put(`/api/auth/${loginRes.body.user.id}`).set('Authorization', 'Bearer ' + testUserAuthToken).set('Content-Type', 'application/json').send(newUser);
   expect(updateRes.status).toBe(200);
 
-  console.log("Users", testUser, updateRes.body)
   expect(updateRes.body.email).toBe(newEmailString);
 })
