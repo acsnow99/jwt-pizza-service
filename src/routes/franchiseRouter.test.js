@@ -8,12 +8,7 @@ let testUserAuthToken;
 beforeAll(async () => {
     const loginRes = await request(app).put('/api/auth').send(adminUser);
     testUserAuthToken = loginRes.body.token;
-});
-
-test('get franchises', async () => {
-    const getRes = await request(app).get('/api/franchise');
-    console.log("Franchises:", getRes.body, getRes.status);
-    expect(getRes.status).toBe(200);
+    testFranchise.name = Math.random().toString(36).substring(2, 12);
 });
 
 test('create franchise', async () => {
@@ -21,3 +16,13 @@ test('create franchise', async () => {
     expect(createRes.status).toBe(200);
     expect(createRes.body.name).toBe(testFranchise.name);
 });
+
+test('get franchises', async () => {
+    const getRes = await request(app).get('/api/franchise');
+    expect(getRes.status).toBe(200);
+    console.log("Got franchises:", getRes.body);
+    const names = [];
+    getRes.body.forEach((fran) => names.push(fran.name));
+    expect(names.includes(testFranchise.name));
+});
+
