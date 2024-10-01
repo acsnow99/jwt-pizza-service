@@ -1,16 +1,29 @@
 const request = require('supertest');
 const app = require('../service');
+const { Role, DB } = require('../database/database.js');
 
-const adminUser = { email: 'a@gmail.com', password: 'passwordagain'}
+const originalPassword = 'passwordagain';
+const adminUserRegister = { name: 'admin', email: 'a@gmail.com', password: 'passwordagain', roles: [{ role: Role.Admin }] }
 const testFranchise = {name: 'pizzaTest', admins: [{email: 'admin@admin.admin'}]};
 let testUserAuthToken;
 let testUserId;
 
 beforeAll(async () => {
-    const loginRes = await request(app).put('/api/auth').send(adminUser);
+    adminUserRegister.email = Math.random().toString(36).substring(2, 12) + '@test.com';
+    const addResult = await DB.addUser(adminUserRegister);
+    addResult.password = originalPassword;
+
+    const loginRes = await request(app)
+        .put('/api/auth')
+        .send({ email: addResult.email, password: addResult.password });
+    
+    expect(loginRes.status).toBe(200);
+    
     testUserAuthToken = loginRes.body.token;
-    testUserId = loginRes.body.user.id;
+    testUserId = loginRes.body.id;
+    
     testFranchise.name = Math.random().toString(36).substring(2, 12);
+    testFranchise.admins[0].email = adminUserRegister.email;
 });
 
 test('create franchise', async () => {
