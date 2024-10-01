@@ -30,6 +30,7 @@ test('create franchise', async () => {
     const createRes = await request(app).post('/api/franchise').set('Content-Type', 'application/json').set('Authorization', 'Bearer ' + testUserAuthToken).send(testFranchise);
     expect(createRes.status).toBe(200);
     expect(createRes.body.name).toBe(testFranchise.name);
+    testFranchise.id = createRes.body.id;
 });
 
 test('get franchises', async () => {
@@ -48,5 +49,13 @@ test('get a user\'s franchises', async () => {
     const names = [];
     getRes.body.forEach((fran) => names.push(fran.name));
     expect(names.includes(testFranchise.name));
+});
+
+
+test('delete a franchise', async () => {
+    const deleteRes = await request(app).delete('/api/franchise/' + testFranchise.id).set('Authorization', 'Bearer ' + testUserAuthToken);
+    expect(deleteRes.status).toBe(200);
+    const getRes = await request(app).get('/api/franchise/' + testUserId).set('Authorization', 'Bearer ' + testUserAuthToken);
+    expect(getRes.body).toStrictEqual([]);
 });
 
