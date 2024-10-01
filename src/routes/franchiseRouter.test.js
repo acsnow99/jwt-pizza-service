@@ -5,6 +5,7 @@ const { Role, DB } = require('../database/database.js');
 const originalPassword = 'passwordagain';
 const adminUserRegister = { name: 'admin', email: 'a@gmail.com', password: 'passwordagain', roles: [{ role: Role.Admin }] }
 const testFranchise = {name: 'pizzaTest', admins: [{email: 'admin@admin.admin'}]};
+const testStore = {franchiseId: 0, name: "thebeststore"};
 let testUserAuthToken;
 let testUserId;
 
@@ -51,6 +52,13 @@ test('get a user\'s franchises', async () => {
     expect(names.includes(testFranchise.name));
 });
 
+test('create store', async () => {
+    testStore.franchiseId = testFranchise.id;
+    const createRes = await request(app).post(`/api/franchise/${testFranchise.id}/store`).set('Content-Type', 'application/json').set('Authorization', 'Bearer ' + testUserAuthToken).send(testStore);
+    expect(createRes.status).toBe(200);
+    expect(createRes.body.name).toBe(testStore.name);
+    testStore.id = createRes.body.id;
+});
 
 test('delete a franchise', async () => {
     const deleteRes = await request(app).delete('/api/franchise/' + testFranchise.id).set('Authorization', 'Bearer ' + testUserAuthToken);
