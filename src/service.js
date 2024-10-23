@@ -15,7 +15,6 @@ app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   next();
 });
-//A useless comment
 const apiRouter = express.Router();
 app.use('/api', apiRouter);
 apiRouter.use('/auth', authRouter);
