@@ -59,7 +59,7 @@ app.use((err, req, res, next) => {
   next();
 });
 
-app.use((req, res, next) => {
+app.use(() => {
   const endTime = process.hrtime(startTime)[1];
   metrics.sendServiceTime(endTime / 1000000000);
 });
