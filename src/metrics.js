@@ -16,19 +16,58 @@ function getMemoryUsagePercentage() {
 const config = require('./config.js');
 
 class Metrics {
+    requestCount = 0;
+    getCount = 0;
+    postCount = 0;
+    putCount = 0;
+    deleteCount = 0;
+
     requestTracker = (req, res, next) => {
-        this.sendMetricToGrafana('jwt-pizza-service', req.method, 'method', 30);
+        this.requestCount++;
+        console.log("Method", req.method);
+        switch (req.method) {
+            case 'GET':
+                this.getCount++;
+                break;
+            case 'POST':
+                this.postCount++;
+                break;
+            case 'PUT':
+                this.putCount++;
+                break;
+            case 'DELETE':
+                this.deleteCount++;
+                break;
+        }
         next();
     }
 
-    sendMetricToGrafana(metricPrefix, httpMethod, metricName, metricValue) {
-        const metric = `${metricPrefix},source=jwt-pizza-service ${metricName}=${metricValue}`;
+    sendOsMetrics = async () => {
+        console.log("Sending system metrics");
+        const cpuUsage = getCpuUsagePercentage();
+        const memoryUsage = getMemoryUsagePercentage();
+        this.sendMetricToGrafana('jwt-pizza-service', 'none', 'CPU', cpuUsage);
+        this.sendMetricToGrafana('jwt-pizza-service', 'none', 'memory', memoryUsage);
+        setTimeout(() => this.sendOsMetrics(), 10000);
+    }
 
-        console.log("Request body:", {
-            method: 'post',
-            body: metric,
-            headers: { Authorization: `Bearer ${config.metrics.userId}:${config.metrics.apiKey}`, 'Content-Type': 'text/plain', },
-            }, config.metrics.url);
+    sendRequestsMetrics = async () => {
+        this.sendMetricToGrafana('jwt-pizza-service', 'all', 'requests', this.requestCount);
+        this.sendMetricToGrafana('jwt-pizza-service', 'get', 'requests', this.getCount);
+        this.sendMetricToGrafana('jwt-pizza-service', 'post', 'requests', this.postCount);
+        this.sendMetricToGrafana('jwt-pizza-service', 'put', 'requests', this.putCount);
+        this.sendMetricToGrafana('jwt-pizza-service', 'delete', 'requests', this.deleteCount);
+        setTimeout(() => this.sendRequestsMetrics(), 10000);
+    }
+
+    sendMetricToGrafana(metricPrefix, httpMethod, metricName, metricValue) {
+        const metric = `${metricPrefix},source=jwt-pizza-service,method=${httpMethod} ${metricName}=${metricValue}`;
+
+        // console.log("Request body:", {
+        //     method: 'post',
+        //     body: metric,
+        //     headers: { Authorization: `Bearer ${config.metrics.userId}:${config.metrics.apiKey}`, 'Content-Type': 'text/plain', },
+        //     }, config.metrics.url);
 
         fetch(`${config.metrics.url}`, {
         method: 'post',
@@ -50,4 +89,6 @@ class Metrics {
 }
 
 const metrics = new Metrics();
+metrics.sendOsMetrics();
+metrics.sendRequestsMetrics();
 module.exports = metrics;
