@@ -12,6 +12,8 @@ const app = express();
 app.use(express.json());
 app.use(setAuthUser);
 app.use((req, res, next) => {
+  req;
+  res;
   startTime = process.hrtime();
   next();
 });
