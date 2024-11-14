@@ -16,8 +16,9 @@ function getMemoryUsagePercentage() {
 const config = require('./config.js');
 
 class Metrics {
-    requestTracker = (req, res) => {
-        this.sendMetricToGrafana('request', req.method, 'requested', 30);
+    requestTracker = (req, res, next) => {
+        this.sendMetricToGrafana('jwt-pizza-service', req.method, 'method', 30);
+        next();
     }
 
     sendMetricToGrafana(metricPrefix, httpMethod, metricName, metricValue) {
