@@ -1,7 +1,7 @@
 const os = require('os');
 
 function getCpuUsagePercentage() {
-  const cpuUsage = os.loadavg()[0] / os.cpus().length;
+  const cpuUsage = os.loadavg()[0] / 2;
   return cpuUsage.toFixed(2) * 100;
 }
 
@@ -21,6 +21,7 @@ class Metrics {
     postCount = 0;
     putCount = 0;
     deleteCount = 0;
+    activeUsers = 0;
 
     requestTracker = (req, res, next) => {
         this.requestCount++;
@@ -42,26 +43,61 @@ class Metrics {
         next();
     }
 
+    sendRegularMetrics = async () => {
+        this.sendOsMetrics();
+        this.sendRequestsMetrics();
+        this.sendUsersMetrics();
+    }
+
     sendOsMetrics = async () => {
         console.log("Sending system metrics");
         const cpuUsage = getCpuUsagePercentage();
         const memoryUsage = getMemoryUsagePercentage();
-        this.sendMetricToGrafana('jwt-pizza-service', 'none', 'CPU', cpuUsage);
-        this.sendMetricToGrafana('jwt-pizza-service', 'none', 'memory', memoryUsage);
+        this.sendMetricToGrafana('jwt-pizza-service', 'none', 'none', 'CPU', cpuUsage);
+        this.sendMetricToGrafana('jwt-pizza-service', 'none', 'none', 'memory', memoryUsage);
         setTimeout(() => this.sendOsMetrics(), 10000);
     }
 
     sendRequestsMetrics = async () => {
-        this.sendMetricToGrafana('jwt-pizza-service', 'all', 'requests', this.requestCount);
-        this.sendMetricToGrafana('jwt-pizza-service', 'get', 'requests', this.getCount);
-        this.sendMetricToGrafana('jwt-pizza-service', 'post', 'requests', this.postCount);
-        this.sendMetricToGrafana('jwt-pizza-service', 'put', 'requests', this.putCount);
-        this.sendMetricToGrafana('jwt-pizza-service', 'delete', 'requests', this.deleteCount);
+        this.sendMetricToGrafana('jwt-pizza-service', 'method', 'all', 'requests', this.requestCount);
+        this.sendMetricToGrafana('jwt-pizza-service', 'method', 'get', 'requests', this.getCount);
+        this.sendMetricToGrafana('jwt-pizza-service', 'method', 'post', 'requests', this.postCount);
+        this.sendMetricToGrafana('jwt-pizza-service', 'method', 'put', 'requests', this.putCount);
+        this.sendMetricToGrafana('jwt-pizza-service', 'method', 'delete', 'requests', this.deleteCount);
         setTimeout(() => this.sendRequestsMetrics(), 10000);
     }
 
-    sendMetricToGrafana(metricPrefix, httpMethod, metricName, metricValue) {
-        const metric = `${metricPrefix},source=jwt-pizza-service,method=${httpMethod} ${metricName}=${metricValue}`;
+    sendUsersMetrics = async () => {
+        this.sendMetricToGrafana('jwt-pizza-service', 'none', 'none', 'activeUsers', this.activeUsers);
+        setTimeout(() => this.sendUsersMetrics(), 10000);
+    }
+
+    sendPizzaCount = async (count) => {
+        this.sendMetricToGrafana('jwt-pizza-service', 'none', 'none', 'numberOfPizzas', count);
+    }
+
+    sendTimeToOrderMetrics = async (time) => {
+        this.sendMetricToGrafana('jwt-pizza-service', 'none', 'none', 'timeToOrder', time);
+    }
+
+    sendOrderCost = async (cost) => {
+        this.sendMetricToGrafana('jwt-pizza-service', 'none', 'none', 'orderCost', cost);
+    }
+
+    sendOrder = async (successMessage) => {
+        this.sendMetricToGrafana('jwt-pizza-service', 'success', successMessage, 'orderAmount', 1)
+    }
+
+    incrementActiveUsers = () => {
+        this.activeUsers++;
+    }
+
+    decrementActiveUsers = () => {
+        this.activeUsers--;
+    }
+
+    sendMetricToGrafana(metricPrefix, variableName, variableValue, metricName, metricValue) {
+        const metric = `${metricPrefix},source=jwt-pizza-service,${variableName}=${variableValue} ${metricName}=${metricValue}`;
 
         // console.log("Request body:", {
         //     method: 'post',
@@ -89,6 +125,5 @@ class Metrics {
 }
 
 const metrics = new Metrics();
-metrics.sendOsMetrics();
-metrics.sendRequestsMetrics();
+metrics.sendRegularMetrics();
 module.exports = metrics;

@@ -3,6 +3,7 @@ const config = require('../config.js');
 const { Role, DB } = require('../database/database.js');
 const { authRouter } = require('./authRouter.js');
 const { asyncHandler, StatusCodeError } = require('../endpointHelper.js');
+const metrics = require('../metrics.js');
 
 const orderRouter = express.Router();
 
@@ -77,17 +78,26 @@ orderRouter.post(
   '/',
   authRouter.authenticateToken,
   asyncHandler(async (req, res) => {
+    const start = process.hrtime();
     const orderReq = req.body;
     const order = await DB.addDinerOrder(req.user, orderReq);
+    await metrics.sendPizzaCount(orderReq.items.length);
+    var cost = 0;
+    order.items.forEach((item) => cost += item.price);
     const r = await fetch(`${config.factory.url}/api/order`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', authorization: `Bearer ${config.factory.apiKey}` },
       body: JSON.stringify({ diner: { id: req.user.id, name: req.user.name, email: req.user.email }, order }),
     });
+    await metrics.sendOrderCost(cost);
+    const timeToOrder = process.hrtime(start)[1] / 1000000000;
+    await metrics.sendTimeToOrderMetrics(timeToOrder);
     const j = await r.json();
     if (r.ok) {
+      await metrics.sendOrder('success');
       res.send({ order, jwt: j.jwt, reportUrl: j.reportUrl });
     } else {
+      await metrics.sendOrder('failure');
       res.status(500).send({ message: 'Failed to fulfill order at factory', reportUrl: j.reportUrl });
     }
   })
