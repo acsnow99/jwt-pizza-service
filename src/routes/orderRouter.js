@@ -81,7 +81,7 @@ orderRouter.post(
     const start = process.hrtime();
     const orderReq = req.body;
     const order = await DB.addDinerOrder(req.user, orderReq);
-    await metrics.sendPizzaCount(orderReq.items.length);
+    await metrics.incrementPizzaCount(orderReq.items.length);
     var cost = 0;
     order.items.forEach((item) => cost += item.price);
     const r = await fetch(`${config.factory.url}/api/order`, {
@@ -89,15 +89,15 @@ orderRouter.post(
       headers: { 'Content-Type': 'application/json', authorization: `Bearer ${config.factory.apiKey}` },
       body: JSON.stringify({ diner: { id: req.user.id, name: req.user.name, email: req.user.email }, order }),
     });
-    await metrics.sendOrderCost(cost);
+    await metrics.incrementRevenue(cost);
     const timeToOrder = process.hrtime(start)[1] / 1000000000;
     await metrics.sendTimeToOrderMetrics(timeToOrder);
     const j = await r.json();
     if (r.ok) {
-      await metrics.sendOrder('success');
+      await metrics.incrementOrder('success');
       res.send({ order, jwt: j.jwt, reportUrl: j.reportUrl });
     } else {
-      await metrics.sendOrder('failure');
+      await metrics.incrementOrder('failure');
       res.status(500).send({ message: 'Failed to fulfill order at factory', reportUrl: j.reportUrl });
     }
   })

@@ -22,6 +22,12 @@ class Metrics {
     putCount = 0;
     deleteCount = 0;
     activeUsers = 0;
+    pizzaCount = 0;
+    revenue = 0;
+    successfulOrder = 0;
+    failedOrder = 0;
+    successfulAuth = 0;
+    failedAuth = 0;
 
     requestTracker = (req, res, next) => {
         this.requestCount++;
@@ -47,6 +53,7 @@ class Metrics {
         this.sendOsMetrics();
         this.sendRequestsMetrics();
         this.sendUsersMetrics();
+        this.sendOrderMetrics();
     }
 
     sendOsMetrics = async () => {
@@ -69,23 +76,49 @@ class Metrics {
 
     sendUsersMetrics = async () => {
         this.sendMetricToGrafana('jwt-pizza-service', 'none', 'none', 'activeUsers', this.activeUsers);
+        this.sendMetricToGrafana('jwt-pizza-service', 'success', 'success', 'auth', this.successfulAuth);
+        this.sendMetricToGrafana('jwt-pizza-service', 'success', 'failed', 'auth', this.failedAuth);
         setTimeout(() => this.sendUsersMetrics(), 10000);
     }
 
-    sendPizzaCount = async (count) => {
-        this.sendMetricToGrafana('jwt-pizza-service', 'none', 'none', 'numberOfPizzas', count);
+    sendOrderMetrics = async () => {
+        this.sendMetricToGrafana('jwt-pizza-service', 'none', 'none', 'numberOfPizzas', this.pizzaCount);
+        this.sendMetricToGrafana('jwt-pizza-service', 'none', 'none', 'revenue', this.revenue);
+        this.sendMetricToGrafana('jwt-pizza-service', 'success', 'success', 'orderAmount', this.successfulOrder);
+        this.sendMetricToGrafana('jwt-pizza-service', 'success', 'failed', 'orderAmount', this.failedOrder);
+        setTimeout(() => this.sendOrderMetrics(), 10000);
+    }
+
+    sendServiceTime = async (time) => {
+        this.sendMetricToGrafana('jwt-pizza-service', 'none', 'none', 'serviceTime', time);
+    }
+
+    incrementSuccessfulAuth = () => {
+        this.successfulAuth++;
+    }
+
+    incrementFailedAuth = () => {
+        this.failedAuth++;
+    }
+
+    incrementPizzaCount = async (count) => {
+        this.pizzaCount += count;
     }
 
     sendTimeToOrderMetrics = async (time) => {
         this.sendMetricToGrafana('jwt-pizza-service', 'none', 'none', 'timeToOrder', time);
     }
 
-    sendOrderCost = async (cost) => {
-        this.sendMetricToGrafana('jwt-pizza-service', 'none', 'none', 'orderCost', cost);
+    incrementRevenue = async (cost) => {
+        this.revenue += cost;
     }
 
-    sendOrder = async (successMessage) => {
-        this.sendMetricToGrafana('jwt-pizza-service', 'success', successMessage, 'orderAmount', 1)
+    incrementOrder = async (successMessage) => {
+        if (successMessage === 'success') {
+            this.successfulOrder++;
+        } else {
+            this.failedOrder++;
+        }
     }
 
     incrementActiveUsers = () => {
