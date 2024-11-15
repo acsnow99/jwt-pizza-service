@@ -28,6 +28,10 @@ app.use((req, res, next) => {
 //A useless comment
 const apiRouter = express.Router();
 app.use(metrics.requestTracker);
+app.use((req, res, next) => {
+  req.token = "*****";
+  next();
+});
 app.use(logger.httpLogger);
 app.use('/api', apiRouter);
 apiRouter.use('/auth', authRouter);
