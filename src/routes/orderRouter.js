@@ -4,6 +4,7 @@ const { Role, DB } = require('../database/database.js');
 const { authRouter } = require('./authRouter.js');
 const { asyncHandler, StatusCodeError } = require('../endpointHelper.js');
 const metrics = require('../metrics.js');
+const logger = require('../logger.js');
 
 const orderRouter = express.Router();
 
@@ -84,11 +85,13 @@ orderRouter.post(
     await metrics.incrementPizzaCount(orderReq.items.length);
     var cost = 0;
     order.items.forEach((item) => cost += item.price);
+    const body = JSON.stringify({ diner: { id: req.user.id, name: req.user.name, email: req.user.email }, order });
     const r = await fetch(`${config.factory.url}/api/order`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', authorization: `Bearer ${config.factory.apiKey}` },
-      body: JSON.stringify({ diner: { id: req.user.id, name: req.user.name, email: req.user.email }, order }),
+      body: body,
     });
+    logger.factoryLogger(order);
     await metrics.incrementRevenue(cost);
     const timeToOrder = process.hrtime(start)[1] / 1000000000;
     await metrics.sendTimeToOrderMetrics(timeToOrder);
