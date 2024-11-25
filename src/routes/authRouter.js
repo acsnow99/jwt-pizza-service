@@ -5,6 +5,7 @@ const { asyncHandler } = require('../endpointHelper.js');
 const { DB, Role } = require('../database/database.js');
 const metrics = require('../metrics.js');
 const { settings } = require('../settings.js');
+const { StatusCodeError } = require('../endpointHelper.js');
 
 const authRouter = express.Router();
 
