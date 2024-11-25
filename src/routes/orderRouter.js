@@ -5,6 +5,7 @@ const { authRouter } = require('./authRouter.js');
 const { asyncHandler, StatusCodeError } = require('../endpointHelper.js');
 const metrics = require('../metrics.js');
 const logger = require('../logger.js');
+const { settings } = require('../settings.js');
 
 const orderRouter = express.Router();
 
@@ -79,6 +80,7 @@ orderRouter.post(
   '/',
   authRouter.authenticateToken,
   asyncHandler(async (req, res) => {
+    console.log("Ordering...")
     const start = process.hrtime();
     const orderReq = req.body;
     const order = await DB.addDinerOrder(req.user, orderReq);
@@ -92,15 +94,18 @@ orderRouter.post(
       body: body,
     });
     logger.factoryLogger(order);
-    await metrics.incrementRevenue(cost);
+    metrics.incrementRevenue(cost);
     const timeToOrder = process.hrtime(start)[1] / 1000000000;
     await metrics.sendTimeToOrderMetrics(timeToOrder);
     const j = await r.json();
-    if (r.ok) {
-      await metrics.incrementOrder('success');
+    console.log("After factory request")
+    if (r.ok && !settings.enableChaos) {
+      console.log("Succeeded order");
+      metrics.incrementOrder('success');
       res.send({ order, jwt: j.jwt, reportUrl: j.reportUrl });
     } else {
-      await metrics.incrementOrder('failure');
+      console.log("Failed order");
+      metrics.incrementOrder('failure');
       res.status(500).send({ message: 'Failed to fulfill order at factory', reportUrl: j.reportUrl });
     }
   })

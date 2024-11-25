@@ -6,6 +6,7 @@ const version = require('./version.json');
 const config = require('./config.js');
 const metrics = require('./metrics.js');
 const logger = require('./logger.js');
+const { settings } = require('./settings.js');
 
 var startTime = 0;
 
@@ -47,6 +48,7 @@ apiRouter.use('/docs', (req, res) => {
 });
 
 app.get('/', (req, res) => {
+  console.log("settings.enableChaos", settings.enableChaos);
   res.json({
     message: 'welcome to JWT Pizza',
     version: version.version,

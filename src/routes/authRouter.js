@@ -4,6 +4,7 @@ const config = require('../config.js');
 const { asyncHandler } = require('../endpointHelper.js');
 const { DB, Role } = require('../database/database.js');
 const metrics = require('../metrics.js');
+const { settings } = require('../settings.js');
 
 const authRouter = express.Router();
 
@@ -37,6 +38,14 @@ authRouter.endpoints = [
     description: 'Logout a user',
     example: `curl -X DELETE localhost:3000/api/auth -H 'Authorization: Bearer tttttt'`,
     response: { message: 'logout successful' },
+  },
+  {
+    method: 'PUT',
+    path: '/api/chaos/:state',
+    requiresAuth: true,
+    description: 'Turn on/off chaos. Must be admin. ',
+    example: `curl -X PUT localhost:3000/api/chaos/true -H 'Authorization: Bearer tttttt'`,
+    response: { chaos: 'true' },
   },
 ];
 
@@ -99,6 +108,20 @@ authRouter.delete(
     clearAuth(req);
     res.json({ message: 'logout successful' });
     metrics.decrementActiveUsers();
+  })
+);
+
+// turn on/off chaos
+authRouter.put(
+  '/chaos/:state',
+  authRouter.authenticateToken,
+  asyncHandler(async (req, res) => {
+    if (!req.user.isRole(Role.Admin)) {
+      throw new StatusCodeError('unknown endpoint', 404);
+    }
+    var enableChaos = req.params.state === 'true';
+    settings.enableChaos = enableChaos;
+    res.json({ chaos: enableChaos });
   })
 );
 
