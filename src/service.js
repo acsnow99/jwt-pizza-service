@@ -6,7 +6,6 @@ const version = require('./version.json');
 const config = require('./config.js');
 const metrics = require('./metrics.js');
 const logger = require('./logger.js');
-const { settings } = require('./settings.js');
 
 var startTime = 0;
 
