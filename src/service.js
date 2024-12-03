@@ -48,7 +48,6 @@ apiRouter.use('/docs', (req, res) => {
 });
 
 app.get('/', (req, res) => {
-  console.log("settings.enableChaos", settings.enableChaos);
   res.json({
     message: 'welcome to JWT Pizza',
     version: version.version,
