@@ -6,8 +6,7 @@ const { Role } = require('../model/model.js');
 const dbModel = require('./dbModel.js');
 const logger = require('../logger.js');
 class DB {
-  constructor(metrics) {
-    this.metrics = metrics;
+  constructor() {
     this.initialized = this.initializeDatabase();
   }
 
@@ -63,7 +62,6 @@ class DB {
       const userResult = await this.query(connection, `SELECT * FROM user WHERE email=?`, [email]);
       const user = userResult[0];
       if (!user || !(await bcrypt.compare(password, user.password))) {
-        this.metrics.incrementFailedAuth();
         throw new StatusCodeError('unknown user', 404);
       }
 

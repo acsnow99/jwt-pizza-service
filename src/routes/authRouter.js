@@ -93,11 +93,16 @@ authRouter.put(
   '/',
   asyncHandler(async (req, res) => {
     const { email, password } = req.body;
-    const user = await DB.getUser(email, password);
-    const auth = await setAuth(user);
-    res.json({ user: user, token: auth });
-    metrics.incrementActiveUsers();
-    metrics.incrementSuccessfulAuth();
+    try {
+      const user = await DB.getUser(email, password);
+      const auth = await setAuth(user);
+      res.json({ user: user, token: auth });
+      metrics.incrementActiveUsers();
+      metrics.incrementSuccessfulAuth();
+    } catch {
+      metrics.incrementFailedAuth();
+      throw new StatusCodeError('unknown user', 404);
+    }
   })
 );
 
